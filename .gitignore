@@ -18,3 +18,5 @@
 *.app
 
 Debug/
+obj/
+libs/
