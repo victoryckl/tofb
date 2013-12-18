@@ -12,7 +12,7 @@ LOCAL_SHARED_LIBRARIES := \
     libui \
     libgui
 
-LOCAL_MODULE:= screencap
+LOCAL_MODULE:= scap
 
 LOCAL_MODULE_TAGS := optional
 
