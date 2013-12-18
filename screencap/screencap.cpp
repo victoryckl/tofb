@@ -51,10 +51,10 @@ static void usage(const char* pname)
 
 static SkBitmap::Config flinger2skia(PixelFormat f)
 {
-	printf("PIXEL_FORMAT_A_8: %d\n", PIXEL_FORMAT_A_8);
-	printf("PIXEL_FORMAT_RGB_565: %d\n", PIXEL_FORMAT_RGB_565);
-	printf("PIXEL_FORMAT_RGBA_4444: %d\n", PIXEL_FORMAT_RGBA_4444);
-	printf("PIXEL_FORMAT_RGBA_8888: %d\n", PIXEL_FORMAT_RGBA_8888);
+	//printf("PIXEL_FORMAT_A_8: %d\n", PIXEL_FORMAT_A_8);
+	//printf("PIXEL_FORMAT_RGB_565: %d\n", PIXEL_FORMAT_RGB_565);
+	//printf("PIXEL_FORMAT_RGBA_4444: %d\n", PIXEL_FORMAT_RGBA_4444);
+	//printf("PIXEL_FORMAT_RGBA_8888: %d\n", PIXEL_FORMAT_RGBA_8888);
 	
     switch (f) {
         case PIXEL_FORMAT_A_8:
@@ -77,17 +77,20 @@ static status_t vinfoToPixelFormat(const fb_var_screeninfo& vinfo,
 {
 
     switch (vinfo.bits_per_pixel) {
-        case 16:
+        case 16:			
             *f = PIXEL_FORMAT_RGB_565;
+			printf("PIXEL_FORMAT_RGB_565\n");
             *bytespp = 2;
             break;
         case 24:
             *f = PIXEL_FORMAT_RGB_888;
+			printf("PIXEL_FORMAT_RGB_888\n");
             *bytespp = 3;
             break;
         case 32:
             // TODO: do better decoding of vinfo here
             *f = PIXEL_FORMAT_RGBX_8888;
+			printf("PIXEL_FORMAT_RGBX_8888\n");
             *bytespp = 4;
             break;
         default:
@@ -102,7 +105,9 @@ int main(int argc, char** argv)
     bool png = false;
     int32_t displayId = DEFAULT_DISPLAY_ID;
     int c;
-    while ((c = getopt(argc, argv, "phd:")) != -1) {
+	bool readfb0 = false;
+	
+    while ((c = getopt(argc, argv, "fphd:")) != -1) {
         switch (c) {
             case 'p':
                 png = true;
@@ -110,6 +115,9 @@ int main(int argc, char** argv)
             case 'd':
                 displayId = atoi(optarg);
                 break;
+			case 'f':
+				readfb0 = true;
+				break;
             case '?':
             case 'h':
                 usage(pname);
@@ -149,25 +157,14 @@ int main(int argc, char** argv)
 
     ScreenshotClient screenshot;
     sp<IBinder> display = SurfaceComposerClient::getBuiltInDisplay(displayId);
-    if (display != NULL && screenshot.update(display) == NO_ERROR) {
+    if (!readfb0 
+		&& display != NULL && screenshot.update(display) == NO_ERROR) {
         base = screenshot.getPixels();
         w = screenshot.getWidth();
         h = screenshot.getHeight();
         f = screenshot.getFormat();
         size = screenshot.getSize();
         printf("screenshot, w:%d,h:%d,f:%d,size:%d\n", w,h,f,size);
-		{
-			const unsigned char * d = (const unsigned char*)base;
-			printf("base:\n%02x,%02x,%02x,%02x; %02x,%02x,%02x,%02x;\n", 
-				d[0], d[1], d[2], d[3], 
-				d[4], d[5], d[6], d[7]);
-			printf("%02x,%02x,%02x,%02x; %02x,%02x,%02x,%02x;\n", 
-				d[8+0], d[8+1], d[8+2], d[8+3], 
-				d[8+4], d[8+5], d[8+6], d[8+7]);
-			printf("%02x,%02x,%02x,%02x; %02x,%02x,%02x,%02x;\n", 
-				d[16+0], d[16+1], d[16+2], d[16+3], 
-				d[16+4], d[16+5], d[16+6], d[16+7]);
-		}
     } else {
         const char* fbpath = "/dev/graphics/fb0";
         int fb = open(fbpath, O_RDONLY);
@@ -193,6 +190,16 @@ int main(int argc, char** argv)
     }
 
     if (base) {
+		{
+			const unsigned char * d = (const unsigned char*)base;
+			printf("base:%p\n", base);
+			for (int r=0; r<4; r++) {
+				for (int i=0; i<16; i++) {
+					printf("%02x,", d[i]);
+				}
+				printf("\n");
+			}
+		}
         if (png) {
             SkBitmap b;
             b.setConfig(flinger2skia(f), w, h);
