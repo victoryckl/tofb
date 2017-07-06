@@ -21,9 +21,33 @@ extern "C" {
 #	define stricmp strcasecmp
 #endif
 
-#include "myfb.h"
+enum {
+	eRGB_MIN = 0,
+	eRGB_565,
+	eRGB_888,
+	eRGBX_8888,
+
+	eRGB_AUTO,//如果没有设置输出图片的格式，则自动选择与输入匹配的格式
+	eRGB_MAX
+};
+
+#define UpAlign4(n) (((n) + 3) & ~3)
+#define UpAlign8(n) (((n) + 7) & ~7)
 
 #define BMP_HEAD_SIZE 14
+
+static const char * g_rgbstr[] =
+{
+	"",
+	"rgb565",
+	"rgb888",
+	"rgbx8888",
+};
+
+static const int g_rgbbpp[] = 
+{
+	0, 16, 24, 32,
+};
 
 enum {
 	eACTION_MIN = -1,
@@ -129,13 +153,12 @@ void rgbx8888_line_reversal(void * p8888, int w, int h);
 
 //转换
 typedef void * (* RGB_CONVERT_FUN)(const void * psrc, int w, int h);
-void * rgb565_to_rgb888_buffer(const void * psrc, int w, int h);
-void * rgb888_to_rgb565_buffer(const void * psrc, int w, int h);
-void * rgb565_to_rgbx8888_buffer(const void * psrc, int w, int h);
-void * rgbx8888_to_rgb565_buffer(const void * psrc, int w, int h);
-void * rgb888_to_rgbx8888_buffer(const void * psrc, int w, int h);
-void * rgbx8888_to_rgb888_buffer(const void * psrc, int w, int h);
 RGB_CONVERT_FUN get_convert_func(int frombpp, int tobpp);
+
+//file to fb
+void * rgb565_to_bgra8888_buffer(const void * psrc, int w, int h);
+void * bgr888_to_bgra8888_buffer(const void * psrc, int w, int h);
+void * abgr8888_to_bgra8888_buffer(const void * psrc, int w, int h);
 
 
 int bmp_to_screen(const char * path);

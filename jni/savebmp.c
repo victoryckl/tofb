@@ -103,6 +103,7 @@ static int get_rgbx8888_header(int w, int h, BMP_WRITE * bmp)
 		size = bmp->header.bfSize - bmp->header.bfOffBits;
 		
 		bmp->u.r8888.i.biSize = sizeof(bmp->u.r8888);
+		printf("\nr8888.size=%d,", bmp->u.r8888.i.biSize);
 		bmp->u.r8888.i.biWidth = w;
 		bmp->u.r8888.i.biHeight = -h;
 		bmp->u.r8888.i.biPlanes = 1;

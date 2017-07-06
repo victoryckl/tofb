@@ -5,32 +5,11 @@
 	
 	purpose:	
 *********************************************************************/
+#ifdef WIN32
+//-------------------------------------------------------------------
 #include <stdio.h>
 #include <stdlib.h>
 #include "./myfb.h"
-
-int bpp_to_type(int frombpp)
-{
-	frombpp = frombpp / 8 - 1;
-	return frombpp;
-}
-
-const char * type_to_rgbstr(int type)
-{
-	const char * rgbstr = NULL;
-	if (type > 0 && type < ARRAYSIZE(g_rgbstr)) {
-		rgbstr = g_rgbstr[type];
-	}
-	return rgbstr;
-}
-
-const char * bpp_to_rgbstr(int frombpp)
-{
-	return type_to_rgbstr(bpp_to_type(frombpp));
-}
-
-#ifdef WIN32
-//-------------------------------------------------------------------
 
 struct FB {
     unsigned short *bits;
@@ -55,6 +34,8 @@ void fb_destory(struct FB *fb) { _d(fb_destory); return;}
 #else
 //-------------------------------------------------------------------
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/mman.h>
@@ -63,6 +44,7 @@ void fb_destory(struct FB *fb) { _d(fb_destory); return;}
 
 #include <linux/fb.h>
 #include <linux/kd.h>
+#include "./myfb.h"
 
 struct FB {
     unsigned short *bits;
@@ -172,13 +154,6 @@ static int _fb_info(struct FB *fb)
 			printf("FBIOGET_VSCREENINFO failed!\n");
 			break;
 		}
-
-		printf("fb0,%s,%dbpp,%d*%d\n",
-			bpp_to_rgbstr(fb_bpp(fb)),
-			fb_bpp(fb),
-			fb_width(fb),
-			fb_height(fb));
-
 		ret = 0;
 	} while (0);
 	return ret;
@@ -256,6 +231,13 @@ int fb_info(FBinfo * fbinfo)
 		fbinfo->bpp = fb_bpp(fb);
 		fbinfo->width = fb_width(fb);
 		fbinfo->height = fb_height(fb);
+
+		printf("fb0,%s,%dbpp,%d*%d\n",
+			fbinfo->bpp == 24 ? "rgb888" : "rgb565",
+			fbinfo->bpp,
+			fbinfo->width,
+			fbinfo->height);
+
 		ret = 0;
 	} while (0);
 	

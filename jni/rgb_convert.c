@@ -1,6 +1,6 @@
 /********************************************************************
-	created:	2012/05/19
-	filename: 	rgb_convert.c
+	created:	2012/04/07
+	filename: 	readbmp.c
 	author:		
 	
 	purpose:	
@@ -168,7 +168,7 @@ static int rgb888_to_rgb565(const void * psrc, int w, int h, void * pdst)
 	return 0;
 }
 
-static int rgb565_to_rgbx8888(const void * psrc, int w, int h, void * pdst)
+int bgr565_to_abgr8888(const void * psrc, int w, int h, void * pdst)
 {
 	int srclinesize = UpAlign4(w * 2);
 	int dstlinesize = UpAlign4(w * 4);
@@ -181,7 +181,7 @@ static int rgb565_to_rgbx8888(const void * psrc, int w, int h, void * pdst)
 	int i,j;
 
 	if (!psrc || !pdst || w <= 0 || h <= 0) {
-		printf("rgb565_to_rgbx8888 : parameter error\n");
+		printf("bgr565_to_abgr8888 : parameter error\n");
 		return -1;
 	}
 
@@ -191,10 +191,10 @@ static int rgb565_to_rgbx8888(const void * psrc, int w, int h, void * pdst)
 		psrcdot = (const unsigned short *)psrcline;
 		pdstdot = pdstline;
 		for (j=0; j<w; j++) {
-			pdstdot++;
-			*pdstdot++ = (unsigned char)(((*psrcdot) >> 0 ) << 3);
-			*pdstdot++ = (unsigned char)(((*psrcdot) >> 5 ) << 2);
-			*pdstdot++ = (unsigned char)(((*psrcdot) >> 11) << 3);
+			/*a*/*pdstdot++ = 0xFF;
+			/*b*/*pdstdot++ = (unsigned char)(((*psrcdot) >> 11) << 3);//b
+			/*g*/*pdstdot++ = (unsigned char)(((*psrcdot) >> 5 ) << 2);//g
+			/*r*/*pdstdot++ = (unsigned char)(((*psrcdot) >> 0 ) << 3);//r
 			psrcdot++;
 		}
 		psrcline += srclinesize;
@@ -204,7 +204,43 @@ static int rgb565_to_rgbx8888(const void * psrc, int w, int h, void * pdst)
 	return 0;
 }
 
-static int rgbx8888_to_rgb565(const void * psrc, int w, int h, void * pdst)
+int rgb565_to_bgra8888(const void * psrc, int w, int h, void * pdst)
+{
+	int srclinesize = UpAlign4(w * 2);
+	int dstlinesize = UpAlign4(w * 4);
+
+	const unsigned char  * psrcline;
+	const unsigned short * psrcdot;
+	unsigned char  * pdstline;
+	unsigned char  * pdstdot;
+
+	int i,j;
+
+	if (!psrc || !pdst || w <= 0 || h <= 0) {
+		printf("rgb565_to_bgra8888 : parameter error\n");
+		return -1;
+	}
+
+	psrcline = (const unsigned char *)psrc;
+	pdstline = (unsigned char *)pdst;
+	for (i=0; i<h; i++) {
+		psrcdot = (const unsigned short *)psrcline;
+		pdstdot = pdstline;
+		for (j=0; j<w; j++) {
+			/*b*/*pdstdot++ = (unsigned char)(((*psrcdot) >> 0 ) << 3);//b
+			/*g*/*pdstdot++ = (unsigned char)(((*psrcdot) >> 5 ) << 2);//g
+			/*r*/*pdstdot++ = (unsigned char)(((*psrcdot) >> 11) << 3);//r
+			/*a*/*pdstdot++ = 0xFF;
+			psrcdot++;
+		}
+		psrcline += srclinesize;
+		pdstline += dstlinesize;
+	}
+	
+	return 0;
+}
+
+static int bgra8888_to_rgb565(const void * psrc, int w, int h, void * pdst)
 {
 	int srclinesize = UpAlign4(w * 4);
 	int dstlinesize = UpAlign4(w * 2);
@@ -217,7 +253,7 @@ static int rgbx8888_to_rgb565(const void * psrc, int w, int h, void * pdst)
 	int i,j;
 	
 	if (!psrc || !pdst || w <= 0 || h <= 0) {
-		printf("rgbx8888_to_rgb565 : parameter error\n");
+		printf("bgra8888_to_rgb565 : parameter error\n");
 		return -1;
 	}
 	
@@ -227,10 +263,12 @@ static int rgbx8888_to_rgb565(const void * psrc, int w, int h, void * pdst)
 		psrcdot = psrcline;
 		pdstdot = (unsigned short *)pdstline;
 		for (j=0; j<w; j++) {
-			//888 r|g|b -> 565 b|g|r
-			*pdstdot =  (((psrcdot[1] >> 3) & 0x1F) << 0)//r
-				|(((psrcdot[2] >> 2) & 0x3F) << 5)//g
-				|(((psrcdot[3] >> 3) & 0x1F) << 11);//b
+			//8888 b|g|r|a -> 565 r|g|b
+			*pdstdot = 
+			     (((psrcdot[2] >> 3) & 0x1F) << 11) //r
+				|(((psrcdot[1] >> 2) & 0x3F) <<  5) //g
+			    |(((psrcdot[0] >> 3) & 0x1F) <<  0);//b
+			
 			psrcdot += 4;
 			pdstdot++;
 		}
@@ -241,7 +279,7 @@ static int rgbx8888_to_rgb565(const void * psrc, int w, int h, void * pdst)
 	return 0;
 }
 
-static int rgb888_to_rgbx8888(const void * psrc, int w, int h, void * pdst)
+static int bgr888_to_bgra8888(const void * psrc, int w, int h, void * pdst)
 {
 	int srclinesize = UpAlign4(w * 3);
 	int dstlinesize = UpAlign4(w * 4);
@@ -254,7 +292,7 @@ static int rgb888_to_rgbx8888(const void * psrc, int w, int h, void * pdst)
 	int i,j;
 
 	if (!psrc || !pdst || w <= 0 || h <= 0) {
-		printf("rgb888_to_rgbx8888 : parameter error\n");
+		printf("bgr888_to_bgra8888 : parameter error\n");
 		return -1;
 	}
 
@@ -264,10 +302,10 @@ static int rgb888_to_rgbx8888(const void * psrc, int w, int h, void * pdst)
 		psrcdot = psrcline;
 		pdstdot = pdstline;
 		for (j=0; j<w; j++) {
-			*pdstdot++ = 0;
-			*pdstdot++ = *psrcdot++;
-			*pdstdot++ = *psrcdot++;
-			*pdstdot++ = *psrcdot++;
+			/*b*/*pdstdot++ = *psrcdot++;//b
+			/*g*/*pdstdot++ = *psrcdot++;//g
+			/*r*/*pdstdot++ = *psrcdot++;//r
+			/*a*/*pdstdot++ = 0xFF;
 		}
 		psrcline += srclinesize;
 		pdstline += dstlinesize;
@@ -276,7 +314,42 @@ static int rgb888_to_rgbx8888(const void * psrc, int w, int h, void * pdst)
 	return 0;
 }
 
-static int rgbx8888_to_rgb888(const void * psrc, int w, int h, void * pdst)
+static int bgr888_to_abgr8888(const void * psrc, int w, int h, void * pdst)
+{
+	int srclinesize = UpAlign4(w * 3);
+	int dstlinesize = UpAlign4(w * 4);
+
+	const unsigned char * psrcline;
+	const unsigned char * psrcdot;
+	unsigned char  * pdstline;
+	unsigned char  * pdstdot;
+
+	int i,j;
+
+	if (!psrc || !pdst || w <= 0 || h <= 0) {
+		printf("bgr888_to_abgr8888 : parameter error\n");
+		return -1;
+	}
+
+	psrcline = (const unsigned char *)psrc;
+	pdstline = (unsigned char *)pdst;
+	for (i=0; i<h; i++) {
+		psrcdot = psrcline;
+		pdstdot = pdstline;
+		for (j=0; j<w; j++) {
+			/*a*/*pdstdot++ = 0xFF;
+			/*b*/*pdstdot++ = *psrcdot++;//b
+			/*g*/*pdstdot++ = *psrcdot++;//g
+			/*r*/*pdstdot++ = *psrcdot++;//r
+		}
+		psrcline += srclinesize;
+		pdstline += dstlinesize;
+	}
+	
+	return 0;
+}
+
+static int bgra8888_to_bgr888(const void * psrc, int w, int h, void * pdst)
 {
 	int srclinesize = UpAlign4(w * 4);
 	int dstlinesize = UpAlign4(w * 3);
@@ -289,7 +362,7 @@ static int rgbx8888_to_rgb888(const void * psrc, int w, int h, void * pdst)
 	int i,j;
 	
 	if (!psrc || !pdst || w <= 0 || h <= 0) {
-		printf("rgbx8888_to_rgb888 : parameter error\n");
+		printf("bgra8888_to_bgr888 : parameter error\n");
 		return -1;
 	}
 	
@@ -299,10 +372,90 @@ static int rgbx8888_to_rgb888(const void * psrc, int w, int h, void * pdst)
 		psrcdot = psrcline;
 		pdstdot = pdstline;
 		for (j=0; j<w; j++) {
-			psrcdot++;
-			*pdstdot++ = *psrcdot++;
-			*pdstdot++ = *psrcdot++;
-			*pdstdot++ = *psrcdot++;
+			/*b*/*pdstdot++ = *psrcdot++;//b
+			/*g*/*pdstdot++ = *psrcdot++;//g
+			/*r*/*pdstdot++ = *psrcdot++;//r
+			psrcdot++;//a
+		}
+		psrcline += srclinesize;
+		pdstline += dstlinesize;
+	}
+	
+	return 0;
+}
+
+static int bgra8888_to_abgr8888(const void * psrc, int w, int h, void * pdst)
+{
+	int srclinesize = UpAlign4(w * 4);
+	int dstlinesize = UpAlign4(w * 4);
+	
+	const unsigned char * psrcline;
+	const unsigned char * psrcdot;
+	unsigned char  * pdstline;
+	unsigned char  * pdstdot;
+	
+	int i,j;
+	
+	if (!psrc || !pdst || w <= 0 || h <= 0) {
+		printf("bgra8888_to_abgr8888 : parameter error\n");
+		return -1;
+	}
+	
+	psrcline = (const unsigned char *)psrc;
+	pdstline = (unsigned char *)pdst;
+	for (i=0; i<h; i++) {
+		psrcdot = psrcline;
+		pdstdot = pdstline;
+
+		for (j=0; j<w; j++) {
+			/*a*/pdstdot[0] = psrcdot[3];//a
+			/*b*/pdstdot[1] = psrcdot[0];//b
+			/*g*/pdstdot[2] = psrcdot[1];//g
+			/*r*/pdstdot[3] = psrcdot[2];//r
+
+			psrcdot+=4;
+			pdstdot+=4;
+			
+		}
+		psrcline += srclinesize;
+		pdstline += dstlinesize;
+	}
+	
+	return 0;
+}
+
+static int abgr8888_to_bgra8888(const void * psrc, int w, int h, void * pdst)
+{
+	int srclinesize = UpAlign4(w * 4);
+	int dstlinesize = UpAlign4(w * 4);
+	
+	const unsigned char * psrcline;
+	const unsigned char * psrcdot;
+	unsigned char  * pdstline;
+	unsigned char  * pdstdot;
+	
+	int i,j;
+	
+	if (!psrc || !pdst || w <= 0 || h <= 0) {
+		printf("abgr8888_to_bgra8888 : parameter error\n");
+		return -1;
+	}
+	
+	psrcline = (const unsigned char *)psrc;
+	pdstline = (unsigned char *)pdst;
+	for (i=0; i<h; i++) {
+		psrcdot = psrcline;
+		pdstdot = pdstline;
+
+		for (j=0; j<w; j++) {
+			/*b*/pdstdot[0] = psrcdot[1];//b
+			/*g*/pdstdot[1] = psrcdot[2];//g
+			/*r*/pdstdot[2] = psrcdot[3];//r
+			/*a*/pdstdot[3] = psrcdot[0];//a
+
+			psrcdot+=4;
+			pdstdot+=4;
+			
 		}
 		psrcline += srclinesize;
 		pdstline += dstlinesize;
@@ -343,14 +496,14 @@ void * rgb888_to_rgb565_buffer(const void * psrc, int w, int h)
 	return pdst;
 }
 
-void * rgb565_to_rgbx8888_buffer(const void * psrc, int w, int h)
+void * rgb565_to_bgra8888_buffer(const void * psrc, int w, int h)
 {
 	int size = h * UpAlign4(w * 4);
 	void * pdst = NULL;
 	if (psrc && w > 0 && h > 0) {
 		pdst = malloc(size);
 		if (pdst) {
-			if (rgb565_to_rgbx8888(psrc, w, h, pdst)) {
+			if (rgb565_to_bgra8888(psrc, w, h, pdst)) {
 				free(pdst);
 				pdst = NULL;
 			}
@@ -359,14 +512,30 @@ void * rgb565_to_rgbx8888_buffer(const void * psrc, int w, int h)
 	return pdst;
 }
 
-void * rgbx8888_to_rgb565_buffer(const void * psrc, int w, int h)
+void * bgr565_to_abgr8888_buffer(const void * psrc, int w, int h)
+{
+	int size = h * UpAlign4(w * 4);
+	void * pdst = NULL;
+	if (psrc && w > 0 && h > 0) {
+		pdst = malloc(size);
+		if (pdst) {
+			if (bgr565_to_abgr8888(psrc, w, h, pdst)) {
+				free(pdst);
+				pdst = NULL;
+			}
+		}
+	}
+	return pdst;
+}
+
+void * bgra8888_to_rgb565_buffer(const void * psrc, int w, int h)
 {
 	int size = h * UpAlign4(w * 2);
 	void * pdst = NULL;
 	if (psrc && w > 0 && h > 0) {
 		pdst = malloc(size);
 		if (pdst) {
-			if (rgbx8888_to_rgb565(psrc, w, h, pdst)) {
+			if (bgra8888_to_rgb565(psrc, w, h, pdst)) {
 				free(pdst);
 				pdst = NULL;
 			}
@@ -375,14 +544,14 @@ void * rgbx8888_to_rgb565_buffer(const void * psrc, int w, int h)
 	return pdst;
 }
 
-void * rgb888_to_rgbx8888_buffer(const void * psrc, int w, int h)
+void * bgr888_to_bgra8888_buffer(const void * psrc, int w, int h)
 {
 	int size = h * UpAlign4(w * 4);
 	void * pdst = NULL;
 	if (psrc && w > 0 && h > 0) {
 		pdst = malloc(size);
 		if (pdst) {
-			if (rgb888_to_rgbx8888(psrc, w, h, pdst)) {
+			if (bgr888_to_bgra8888(psrc, w, h, pdst)) {
 				free(pdst);
 				pdst = NULL;
 			}
@@ -391,14 +560,62 @@ void * rgb888_to_rgbx8888_buffer(const void * psrc, int w, int h)
 	return pdst;
 }
 
-void * rgbx8888_to_rgb888_buffer(const void * psrc, int w, int h)
+void * bgr888_to_abgr8888_buffer(const void * psrc, int w, int h)
+{
+	int size = h * UpAlign4(w * 4);
+	void * pdst = NULL;
+	if (psrc && w > 0 && h > 0) {
+		pdst = malloc(size);
+		if (pdst) {
+			if (bgr888_to_abgr8888(psrc, w, h, pdst)) {
+				free(pdst);
+				pdst = NULL;
+			}
+		}
+	}
+	return pdst;
+}
+
+void * bgra8888_to_bgr888_buffer(const void * psrc, int w, int h)
 {
 	int size = h * UpAlign4(w * 3);
 	void * pdst = NULL;
 	if (psrc && w > 0 && h > 0) {
 		pdst = malloc(size);
 		if (pdst) {
-			if (rgbx8888_to_rgb888(psrc, w, h, pdst)) {
+			if (bgra8888_to_bgr888(psrc, w, h, pdst)) {
+				free(pdst);
+				pdst = NULL;
+			}
+		}
+	}
+	return pdst;
+}
+
+void * bgra8888_to_abgr8888_buffer(const void * psrc, int w, int h)
+{
+	int size = h * UpAlign4(w * 4);
+	void * pdst = NULL;
+	if (psrc && w > 0 && h > 0) {
+		pdst = malloc(size);
+		if (pdst) {
+			if (bgra8888_to_abgr8888(psrc, w, h, pdst)) {
+				free(pdst);
+				pdst = NULL;
+			}
+		}
+	}
+	return pdst;
+}
+
+void * abgr8888_to_bgra8888_buffer(const void * psrc, int w, int h)
+{
+	int size = h * UpAlign4(w * 4);
+	void * pdst = NULL;
+	if (psrc && w > 0 && h > 0) {
+		pdst = malloc(size);
+		if (pdst) {
+			if (abgr8888_to_bgra8888(psrc, w, h, pdst)) {
 				free(pdst);
 				pdst = NULL;
 			}
@@ -409,9 +626,9 @@ void * rgbx8888_to_rgb888_buffer(const void * psrc, int w, int h)
 
 static const RGB_CONVERT_FUN g_convert_func[3][3] = 
 {
-	{NULL, rgb565_to_rgb888_buffer, rgb565_to_rgbx8888_buffer},
-	{rgb888_to_rgb565_buffer, NULL, rgb888_to_rgbx8888_buffer},
-	{rgbx8888_to_rgb565_buffer, rgbx8888_to_rgb888_buffer, NULL}
+	{NULL, rgb565_to_rgb888_buffer, bgr565_to_abgr8888_buffer},
+	{rgb888_to_rgb565_buffer, NULL, bgr888_to_abgr8888_buffer},
+	{bgra8888_to_rgb565_buffer, bgra8888_to_bgr888_buffer, bgra8888_to_abgr8888_buffer}
 };
 
 RGB_CONVERT_FUN get_convert_func(int frombpp, int tobpp)

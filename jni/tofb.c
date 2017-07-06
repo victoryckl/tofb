@@ -57,16 +57,13 @@ static void usage(void)
 	printf("  -r rgbxxx        the format of output bmp\n");
 	printf("  -h               display this information\n");
 	printf("  -v               output version information\n");
-
-	printf("\nEmail bug reports to victoryckl@163.com\n\n");
 }
 
 static void version(void)
 {
-	printf("\ntofb V1.0.0.2012.04.16.01\n");
+	printf("\ntofb V1.0.0.2017.07.06.02\n");
 	printf("\nThis is free software: you are free to change and redistribute it.\n");
 	printf("There is NO WARRANTY, to the extent permitted by law.\n");
-	printf("\nWritten by victoryckl@163.com\n\n");
 }
 
 
@@ -123,7 +120,7 @@ static int check_option(int argc, char * argv[], struct option_info * info)
 			break;
         }
     }
-
+	
 	if (info->output_rgb == eRGB_MIN) {
 		info->output_rgb = eRGB_565;//默认输出为565格式
 	}
@@ -188,6 +185,7 @@ static int file_to_file(const char * srcpath, const char * dstpath, int output_r
 		srcbpp = bmp_bpp(bmp);
 		dstbpp = g_rgbbpp[output_rgb];
 
+		printf("bmp to fb, %dx%d,%d=>%d,%s=>%s\n", w,h,srcbpp,dstbpp,srcpath,dstpath);
 		convert_func = get_convert_func(srcbpp, dstbpp);
 		if (convert_func) {
 			pdata = convert_func(bmpdata, w, h);
@@ -235,7 +233,17 @@ static int file_to_fb(const char * srcpath)
 		srcbpp = bmp_bpp(bmp);
 		dstbpp = fb_bpp(fb);
 		
-		convert_func = get_convert_func(srcbpp, dstbpp);
+		printf("bmp to fb, %dx%d,%d=>%d,%s\n", sw,sh,srcbpp,dstbpp,srcpath);
+		if (srcbpp==32 && dstbpp==32) {
+			convert_func = abgr8888_to_bgra8888_buffer;
+		} else if (srcbpp==24 && dstbpp==32) {
+			convert_func = bgr888_to_bgra8888_buffer;
+		} else if (srcbpp==16 && dstbpp==32) {
+			convert_func = rgb565_to_bgra8888_buffer;
+		} else {
+			convert_func = get_convert_func(srcbpp, dstbpp);
+		}
+		
 		if (convert_func) {
 			pdata = convert_func(bmpdata, sw, sh);
 			bmpdata = pdata;
@@ -279,7 +287,8 @@ static int fb_to_file(const char * dstpath, int output_rgb)
 		fbdata = fb_bits(fb);
 		srcbpp = fb_bpp(fb);
 		dstbpp = g_rgbbpp[output_rgb];
-
+		
+		printf("fb to bmp, %dx%d,%d=>%d,%s\n", w,h,srcbpp,dstbpp,dstpath);
 		convert_func = get_convert_func(srcbpp, dstbpp);
 		if (convert_func) {
 			pdata = convert_func(fbdata, w, h);

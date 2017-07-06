@@ -19,7 +19,7 @@ LOCAL_LDLIBS := -llog
 
 include $(BUILD_STATIC_LIBRARY)
 
-################################################
+###############################################
 include $(CLEAR_VARS)
 
 LOCAL_MODULE:= tofb
@@ -29,5 +29,9 @@ LOCAL_SRC_FILES:=main.c
 LOCAL_STATIC_LIBRARIES := libsavebmp libcutils libc
 
 LOCAL_LDLIBS := -llog
+
+LOCAL_CFLAGS += -pie -fPIE
+LOCAL_LDFLAGS += -pie -fPIE
+LOCAL_FORCE_STATIC_EXECUTABLE := true
 
 include $(BUILD_EXECUTABLE)
